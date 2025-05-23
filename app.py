@@ -5,7 +5,6 @@ import altair as alt
 import pandas as pd
 from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
 
-
 # —————— 1) SET PAGE CONFIG PRIMA DI OGNI ALTRA CHIAMATA st.* ——————
 st.set_page_config(page_title="Sentiment & Watch Again", layout="centered")
 
@@ -42,7 +41,6 @@ vectorizer, clf_sent, clf_watch, ts, ps, tw, pw = load_artifacts()
 labels_sent  = {0: "Negative 😞", 1: "Positive 😀"}
 labels_watch = {0: "No Rewatch 🙁", 1: "Would Rewatch 😊"}
 
-
 # —————— 3) Titoli e istruzioni ——————
 st.title("📊 Sentiment & Rewatch Prediction")
 st.markdown("📚 AI e ML per il marketing - IULM - Luca Tallarico 1034109")
@@ -52,14 +50,15 @@ st.subheader("💡 Esempio recensioni - Copia e Incolla")
 st.markdown(
     """
     **1)** I absolutely loved the movie, great performances, \
-beautiful cinematography, and an unforgettable soundtrack.  
+beautiful cinematography, and an unforgettable soundtrack.
+
     **2)** Good characters and a solid plot, but not something I’d revisit, \
-one watch was enough.  
+one watch was enough.
+
     **3)** Poor script and over the top acting. I couldn’t connect with any \
 of the characters.
     """
 )
-
 
 # —————— 4) Input utente ——————
 user_input = st.text_area("✏️ Testo della recensione", height=150)
@@ -106,8 +105,12 @@ if st.button("Analizza"):
 
     # — 5️⃣ Predizione finale & KPI —
     st.subheader("5️⃣ Predizione e KPI")
-    p_s, p_w = clf_sent.predict_proba(X)[0], clf_watch.predict_proba(X)[0]
-    y_s, y_w = clf_sent.predict(X)[0],    clf_watch.predict(X)[0]
+    p_s = clf_sent.predict_proba(X)[0]
+    p_w = clf_watch.predict_proba(X)[0]  # Assicurati che questa linea sia eseguita
+    y_s, y_w = clf_sent.predict(X)[0], clf_watch.predict(X)[0]
+
+    st.write(f"Debug - p_w: {p_w}")  # Aggiungi questa linea per il debugging
+
     st.success(f"🎯 Sentiment: **{labels_sent[y_s]}**  "
                f"(Pos={p_s[1]:.2f} | Neg={p_s[0]:.2f})")
     st.success(f"🎬 Watch Again: **{labels_watch[y_w]}**  "
@@ -121,31 +124,32 @@ if st.button("Analizza"):
     st.subheader("6️⃣ Probabilità – grafico")
     df_s = pd.DataFrame({"Classe":["Neg","Pos"],"Prob":[p_s[0],p_s[1]]})
     df_w = pd.DataFrame({"No/Yes":["No","Yes"],"Prob":[p_w[0],p_w[1]]})
-import altair as alt
 
-# — 6️⃣ Probabilità – grafico e dietro le quinte —
-st.subheader("6️⃣ Probabilità – grafico e dietro le quinte")
+    import altair as alt
 
-# 1) Costruisci i DataFrame delle probabilità
-prob_df_s = pd.DataFrame({
+    # — 6️⃣ Probabilità – grafico e dietro le quinte —
+    st.subheader("6️⃣ Probabilità – grafico e dietro le quinte")
+
+    # 1) Costruisci i DataFrame delle probabilità
+    prob_df_s = pd.DataFrame({
     "Classe":    ["Negative", "Positive"],
     "Probabilità": [p_s[0],    p_s[1]]
 })
-prob_df_w = pd.DataFrame({
+    prob_df_w = pd.DataFrame({
     "Watch Again": ["No Rewatch", "Would Rewatch"],
     "Probabilità": [p_w[0],     p_w[1]]
 })
 
-# 2) Mostra le tabelle con i numeri esatti
-st.markdown("**Tabella delle probabilità (Sentiment)**")
-st.dataframe(prob_df_s)
+    # 2) Mostra le tabelle con i numeri esatti
+    st.markdown("**Tabella delle probabilità (Sentiment)**")
+    st.dataframe(prob_df_s)
 
-st.markdown("**Tabella delle probabilità (Watch Again)**")
-st.dataframe(prob_df_w)
+    st.markdown("**Tabella delle probabilità (Watch Again)**")
+    st.dataframe(prob_df_w)
 
-# 3) Versione Altair interattiva per il Sentiment
-st.markdown("**Grafico interattivo (Sentiment)**")
-chart_s = (
+    # 3) Versione Altair interattiva per il Sentiment
+    st.markdown("**Grafico interattivo (Sentiment)**")
+    chart_s = (
     alt.Chart(prob_df_s)
        .mark_bar()
        .encode(
@@ -159,11 +163,11 @@ chart_s = (
        .properties(width=400, height=300)
        .interactive()
 )
-st.altair_chart(chart_s, use_container_width=True)
+    st.altair_chart(chart_s, use_container_width=True)
 
-# 4) Versione Altair interattiva per il Watch Again
-st.markdown("**Grafico interattivo (Watch Again)**")
-chart_w = (
+    # 4) Versione Altair interattiva per il Watch Again
+    st.markdown("**Grafico interattivo (Watch Again)**")
+    chart_w = (
     alt.Chart(prob_df_w)
        .mark_bar()
        .encode(
@@ -177,13 +181,12 @@ chart_w = (
        .properties(width=400, height=300)
        .interactive()
 )
-st.altair_chart(chart_w, use_container_width=True)
+    st.altair_chart(chart_w, use_container_width=True)
 
-# 5) (Opzionale) Ricorda all’utente la soglia di decisione
-st.markdown(
+    # 5) (Opzionale) Ricorda all’utente la soglia di decisione
+    st.markdown(
     "_Per default classifichiamo “Positive” o “Would Rewatch” quando Prob ≥ 0.50_"
 )
-
 
 import pandas as pd
 
@@ -206,9 +209,9 @@ if "watch_again" not in df.columns:
 # Mostro solo le prime 5 righe con text, label e watch_again
 st.dataframe(df[["text","label","watch_again"]].head(5))
 st.markdown("""
-- **text**: la recensione testuale  
-- **label**: 0 = negativo, 1 = positivo  
-- **watch_again**: 0 = non rivedrebbe, 1 = rivedrebbe  
+- **text**: la recensione testuale
+- **label**: 0 = negativo, 1 = positivo
+- **watch_again**: 0 = non rivedrebbe, 1 = rivedrebbe
 """)
 
 # —————— Valutazione globale del modello ——————
@@ -276,16 +279,16 @@ st.dataframe(
 st.markdown("---")
 st.subheader("📖 Mini-glossario")
 st.markdown("""
-- **TF-IDF**: peso di un termine _t_ nel documento _d_  
-  \\[ 
-    \mathrm{tfidf}(t,d) 
-    = \frac{\mathrm{tf}(t,d)}{\sum_{t'} \mathrm{tf}(t',d)} 
-      \times \log\frac{N}{\mathrm{df}(t)} 
+- **TF-IDF**: peso di un termine _t_ nel documento _d_
+  \\[
+    \mathrm{tfidf}(t,d)
+    = \frac{\mathrm{tf}(t,d)}{\sum_{t'} \mathrm{tf}(t',d)}
+      \times \log\frac{N}{\mathrm{df}(t)}
   \\]
 
-- **Log-prob**: \\(\log P(t\mid C)\\), peso del termine nel modello Naive Bayes.  
-- **Prior**: \\(\log P(C)\\), log-probabilità della classe sul training set.  
-- **Likelihood**: log-probabilità condizionata di ogni token, assunte indipendenti.  
+- **Log-prob**: \\(\log P(t\mid C)\\), peso del termine nel modello Naive Bayes.
+- **Prior**: \\(\log P(C)\\), log-probabilità della classe sul training set.
+- **Likelihood**: log-probabilità condizionata di ogni token, assunte indipendenti.
 - **ROC AUC**: area sotto la curva ROC, misura la capacità di distinguere le classi.
 """)
 
@@ -295,41 +298,44 @@ st.subheader("📚 Naive Bayes Classifier assume:")
 # — Sezione di spiegazione dettagliata —
 with st.expander("🧐 Come funziona il modello (clicca per espandere)"):
     st.markdown("""
-    **1. Preprocessing**  
-    - Ogni recensione viene **pulita** (minuscolo, rimozione di punteggiatura e caratteri non alfabetici).  
+    **1. Preprocessing**
+    - Ogni recensione viene **pulita** (minuscolo, rimozione di punteggiatura e caratteri non alfabetici).
     - Viene trasformata in un **vettore TF-IDF**: ogni parola diventa una dimensione, il suo peso riflette frequenza e rarità.
 
-    **2. Calcolo delle probabilità**  
-    - **Prior** \(P(C)\): la frequenza di ciascuna classe (positive/negative, rewatch/no) nel training set.  
-    - **Likelihood** \(P(x_i \mid C)\): il log-prob di ciascun token estratto dal modello (`feature_log_prob_`).  
+    **2. Calcolo delle probabilità**
+    - **Prior** \(P(C)\): la frequenza di ciascuna classe (positive/negative, rewatch/no) nel training set.
+    
+    - **Likelihood** \(P(x_i \mid C)\): il log-prob di ciascun token estratto dal modello (feature_log_prob_).
+    
     - **Ipotesi di indipendenza**: si assume che i token siano condizionalmente indipendenti dato lo stato \(C\).
 
-    **3. Formula di Bayes**  
+    **3. Formula di Bayes**
     \\[
-      P(C \mid x) 
-        = \\frac{P(C) \\times \\prod_{i=1}^n P(x_i \\mid C)}{P(x)}  
+      P(C \mid x)
+        = \\frac{P(C) \\times \\prod_{i=1}^n P(x_i \\mid C)}{P(x)}
         \\propto P(C) \\times \\prod_{i=1}^n P(x_i \\mid C)
-    \\]  
-    In *log-spazio* diventa:  
+    \\]
+    
+    In *log-spazio* diventa:
     \\[
       \\log P(C \\mid x)
         = \\log P(C) + \\sum_{i=1}^n \\log P(x_i \\mid C)
     \\]
 
-    **4. Decisione finale**  
-    - Calcoliamo il punteggio logaritmico per entrambe le classi.  
-    - Se \(\log P(\text{positive} \mid x) > \log P(\text{negative} \mid x)\), prediciamo *positive*, altrimenti *negative*.  
-    - Stessa logica per *watch_again* vs *no_watch_again*.  
+    **4. Decisione finale**
+    - Calcoliamo il punteggio logaritmico per entrambe le classi.
+    - Se \(\log P(\text{positive} \mid x) > \log P(\text{negative} \mid x)\), prediciamo *positive*, altrimenti *negative*.
+    - Stessa logica per *watch_again* vs *no_watch_again*.
 
-    **5. Vantaggi del Naive Bayes**  
-    - **Semplicità**: pochi parametri, addestra in millisecondi anche su decine di migliaia di esempi.  
-    - **Trasparenza**: puoi vedere direttamente i token più “forti” (quelli con log-prob più alti).  
-    - **Buone performance** su testi brevi e classificazione binaria.  
+    **5. Vantaggi del Naive Bayes**
+    - **Semplicità**: pochi parametri, addestra in millisecondi anche su decine di migliaia di esempi.
+    
+    - **Trasparenza**: puoi vedere direttamente i token più “forti” (quelli con log-prob più alti).
+    
+    - **Buone performance** su testi brevi e classificazione binaria.
     """)
 
 # … qui prosegue il resto del tuo flusso (input, button, output, grafici) …
-
-
 
 # … tutto il codice di prediction e grafici …
 
@@ -393,53 +399,53 @@ Questo mini-tool serve a:
 
 ---
 
-### 🔎 Step-by-step dell’algoritmo Naive Bayes  
+### 🔎 Step-by-step dell’algoritmo Naive Bayes
 
-1. **Tokenizzazione & TF-IDF**  
-   - Ogni recensione viene “pulita” (minuscolo, rimozione punteggiatura)  
-   - Costruiamo il vettore TF-IDF:  
+1. **Tokenizzazione & TF-IDF**
+   - Ogni recensione viene “pulita” (minuscolo, rimozione punteggiatura)
+   - Costruiamo il vettore TF-IDF:
      \[
        \text{tfidf}_{i,j}
        = \frac{\text{tf}_{i,j}}{\sum_k \text{tf}_{k,j}}
        \times \log\frac{N}{\text{df}_i}
-     \]  
-   - tf: frequenza del termine _i_ nel documento _j_; df: quante volte _i_ compare in qualsiasi doc; _N_ = numero totale di documenti.  
+     \]
+   - tf: frequenza del termine _i_ nel documento _j_; df: quante volte _i_ compare in qualsiasi doc; _N_ = numero totale di documenti.
 
-2. **Stima delle probabilità a priori**  
-   - Calcolo \(P(\text{Positive})\) e \(P(\text{Negative})\) come proporzione di documenti di ciascuna classe.  
+2. **Stima delle probabilità a priori**
+   - Calcolo \(P(\text{Positive})\) e \(P(\text{Negative})\) come proporzione di documenti di ciascuna classe.
 
-3. **Stima delle probabilità condizionate**  
-   - Per ciascuna parola \(w\) e classe \(c\), calcolo  
+3. **Stima delle probabilità condizionate**
+   - Per ciascuna parola \(w\) e classe \(c\), calcolo
      \[
        P(w \mid c)
        = \frac{\text{conteggio}(w,c) + \alpha}{\sum_{w'} \text{conteggio}(w',c) + \alpha\,V}
-     \]  
-     con _Laplace smoothing_ \(\alpha=1\), _V_ = dimensione del vocabolario.  
+     \]
+     con _Laplace smoothing_ \(\alpha=1\), _V_ = dimensione del vocabolario.
 
-4. **Predizione**  
-   - Dato un nuovo documento, calcolo per ciascuna classe \(c\):  
+4. **Predizione**
+   - Dato un nuovo documento, calcolo per ciascuna classe \(c\):
      \[
        \log P(c \mid d)
        \;\propto\;
        \log P(c)
        + \sum_{w \in d} \log P(w\mid c)
-     \]  
-   - Scelgo la classe con probabilità massima.  
+     \]
+   - Scelgo la classe con probabilità massima.
 
-5. **Estensione “Watch Again”**  
-   - Allo stesso modo, addestro un NB secondario su un’etichetta sintetica `watch_again` (80% di rivedrebbe se sentiment positivo, 10% altrimenti).
+5. **Estensione “Watch Again”**
+   - Allo stesso modo, addestro un NB secondario su un’etichetta sintetica watch_again (80% di rivedrebbe se sentiment positivo, 10% altrimenti).
 
 ---
 
-🔧 **Architettura del codice**  
-- `load_artifacts()` carica:  
-  - `vectorizer.pkl` (TF-IDF)  
-  - `nb_model.pkl` (sentiment)  
-  - `watch_model.pkl` (watch_again)  
-  - `tokens.pkl` (top-10 token per classe)  
-- Alla pressione di **Analizza**, calcolo:  
-  1. Pulizia e vettorizzazione  
-  2. Predizioni + probabilità  
-  3. Visualizzazione testuale, bar-chart, token chart  
-  4. KPI (metriche percentuali)  
+🔧 **Architettura del codice**
+- load_artifacts() carica:
+  - vectorizer.pkl (TF-IDF)
+  - nb_model.pkl (sentiment)
+  - watch_model.pkl (watch_again)
+  - tokens.pkl (top-10 token per classe)
+- Alla pressione di **Analizza**, calcolo:
+  1. Pulizia e vettorizzazione
+  2. Predizioni + probabilità
+  3. Visualizzazione testuale, bar-chart, token chart
+  4. KPI (metriche percentuali)
 """)
