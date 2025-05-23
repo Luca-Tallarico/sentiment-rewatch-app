@@ -129,7 +129,6 @@ if st.button("Analizza"):
 
     # — 6️⃣ Probabilità – grafico e dietro le quinte —
     st.subheader("6️⃣ Probabilità – grafico e dietro le quinte")
-
     # 1) Costruisci i DataFrame delle probabilità
     prob_df_s = pd.DataFrame({
     "Classe":    ["Negative", "Positive"],
