@@ -121,8 +121,69 @@ if st.button("Analizza"):
     st.subheader("6️⃣ Probabilità – grafico")
     df_s = pd.DataFrame({"Classe":["Neg","Pos"],"Prob":[p_s[0],p_s[1]]})
     df_w = pd.DataFrame({"No/Yes":["No","Yes"],"Prob":[p_w[0],p_w[1]]})
-    st.bar_chart(df_s.set_index("Classe"))
-    st.bar_chart(df_w.set_index("No/Yes"))
+import altair as alt
+
+# — 6️⃣ Probabilità – grafico e dietro le quinte —
+st.subheader("6️⃣ Probabilità – grafico e dietro le quinte")
+
+# 1) Costruisci i DataFrame delle probabilità
+prob_df_s = pd.DataFrame({
+    "Classe":    ["Negative", "Positive"],
+    "Probabilità": [p_s[0],    p_s[1]]
+})
+prob_df_w = pd.DataFrame({
+    "Watch Again": ["No Rewatch", "Would Rewatch"],
+    "Probabilità": [p_w[0],     p_w[1]]
+})
+
+# 2) Mostra le tabelle con i numeri esatti
+st.markdown("**Tabella delle probabilità (Sentiment)**")
+st.dataframe(prob_df_s)
+
+st.markdown("**Tabella delle probabilità (Watch Again)**")
+st.dataframe(prob_df_w)
+
+# 3) Versione Altair interattiva per il Sentiment
+st.markdown("**Grafico interattivo (Sentiment)**")
+chart_s = (
+    alt.Chart(prob_df_s)
+       .mark_bar()
+       .encode(
+           x=alt.X("Classe", title=None),
+           y=alt.Y("Probabilità:Q", title="Probabilità"),
+           tooltip=[
+             alt.Tooltip("Classe", title="Classe"),
+             alt.Tooltip("Probabilità:Q", title="Probabilità", format=".2f")
+           ]
+       )
+       .properties(width=400, height=300)
+       .interactive()
+)
+st.altair_chart(chart_s, use_container_width=True)
+
+# 4) Versione Altair interattiva per il Watch Again
+st.markdown("**Grafico interattivo (Watch Again)**")
+chart_w = (
+    alt.Chart(prob_df_w)
+       .mark_bar()
+       .encode(
+           x=alt.X("Watch Again", title=None),
+           y=alt.Y("Probabilità:Q", title="Probabilità"),
+           tooltip=[
+             alt.Tooltip("Watch Again", title="Watch Again"),
+             alt.Tooltip("Probabilità:Q", title="Probabilità", format=".2f")
+           ]
+       )
+       .properties(width=400, height=300)
+       .interactive()
+)
+st.altair_chart(chart_w, use_container_width=True)
+
+# 5) (Opzionale) Ricorda all’utente la soglia di decisione
+st.markdown(
+    "_Per default classifichiamo “Positive” o “Would Rewatch” quando Prob ≥ 0.50_"
+)
+
 
 import pandas as pd
 
@@ -272,8 +333,49 @@ with st.expander("🧐 Come funziona il modello (clicca per espandere)"):
 
 # … tutto il codice di prediction e grafici …
 
+from sklearn.metrics import roc_curve
+
+# ——————  X) Dietro le quinte della ROC sul test set ——————
 st.header("📈 ROC curve sul test set")
-st.image("roc_curves.png", caption="ROC Sentiment vs Watch Again", use_column_width=True)
+# Calcola fpr, tpr e soglie per WatchAgain
+fpr_w, tpr_w, thr_w = roc_curve(y_true_w, y_prob_w, pos_label=1)
+
+# Costruisci il DataFrame
+roc_df = pd.DataFrame({
+    "threshold": thr_w,
+    "false_positive_rate": fpr_w,
+    "true_positive_rate": tpr_w
+})
+
+# Mostra i primi 10 punti in tabella
+st.subheader("🔍 Tabella dei punti ROC")
+st.dataframe(roc_df.head(10))
+
+# Grafico interattivo con Altair
+st.subheader("📈 Curva ROC (dietro le quinte)")
+import altair as alt
+
+roc_chart = (
+    alt.Chart(roc_df)
+       .mark_line(point=True)
+       .encode(
+           x=alt.X("false_positive_rate:Q", title="False Positive Rate"),
+           y=alt.Y("true_positive_rate:Q",  title="True Positive Rate"),
+           tooltip=[
+               alt.Tooltip("threshold:Q", title="Threshold"),
+               alt.Tooltip("false_positive_rate:Q", title="FPR"),
+               alt.Tooltip("true_positive_rate:Q", title="TPR")
+           ]
+       )
+       .properties(width=600, height=400)
+       .interactive()
+)
+st.altair_chart(roc_chart, use_container_width=True)
+
+# (Facoltativo) AUC di nuovo in calce
+from sklearn.metrics import auc
+auc_w2 = auc(fpr_w, tpr_w)
+st.metric("🔢 AUC (calcolata manualmente)", f"{auc_w2:.3f}")
 
 # ——————  X) Descrizione del progetto e algoritmo ——————
 st.markdown("---")
@@ -341,4 +443,3 @@ Questo mini-tool serve a:
   3. Visualizzazione testuale, bar-chart, token chart  
   4. KPI (metriche percentuali)  
 """)
-
